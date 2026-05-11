@@ -1,18 +1,30 @@
 /** construct a grid with vertices on the unit circle and element parametrization */
 
-#include <cmath>
 #include <config.h>
-#include <functional>
-#include <iostream>
-#include <memory>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/version.hh>
+
+#include <dune/grid/common/gridfactory.hh>
 #include <dune/grid/common/mcmgmapper.hh> // mapper class
+
 #include <dune/grid/io/file/vtk.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
 
+#include <dune/foamgrid/foamgrid/foamgridfactory.hh>
 #include <dune/foamgrid/foamgrid.hh>
+
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <functional>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <vector>
+
+#include <stddef.h>
 
 /**
  * \brief Mapping class mapping from a secant on the unit circle onto the circle

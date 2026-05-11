@@ -5,8 +5,10 @@
 #include <CGAL/intersections.h>
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Boolean_set_operations_2.h>
+#if defined(CGAL_USE_BASIC_VIEWER) && CGAL_USE_BASIC_VIEWER
 #include <CGAL/draw_polygon_2.h>
 #include <CGAL/draw_polygon_with_holes_2.h>
+#endif
 #include <vector>
 #include <iostream>
 #include <cmath> 

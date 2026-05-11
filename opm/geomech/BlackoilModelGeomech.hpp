@@ -93,40 +93,41 @@ namespace Opm
 
 
         template <class NonlinearSolverType>
-        SimulatorReportSingle nonlinearIteration(const int iteration,
-                                                   const SimulatorTimerInterface& timer,
+        SimulatorReportSingle nonlinearIteration(const SimulatorTimerInterface& timer,
                                                   NonlinearSolverType& nonlinear_solver){
                 SimulatorReportSingle report;
                 const PropertyTree& prm = this->simulator_.problem().getGeomechParam();
                 std::string method = prm.get<std::string>("solver.method");
                 if (method == "PostSolve") {
-                    report = Parent::nonlinearIteration(iteration, timer, nonlinear_solver);
+                    report = Parent::nonlinearIteration(timer, nonlinear_solver);
                 } else if (method == "SeqMechFrac") {
-                    report = this->nonlinearIterationSeqMechFrac(iteration, timer, nonlinear_solver);
+                    report = this->nonlinearIterationSeqMechFrac(timer, nonlinear_solver);
                 } else if (method == "SeqMech") {
-                    report = this->nonlinearIterationSeqMech(iteration, timer, nonlinear_solver);
+                    report = this->nonlinearIterationSeqMech(timer, nonlinear_solver);
                 } else if (method == "FullyImplicitMech") {
                     assert(false);
                 } else {
                     assert(false);
-                    std::cout << "Geomech nonlinearIterationNewton with mechanical solve:" << iteration;// << std::endl;
-                    Parent::nonlinearIterationNewton(iteration, timer, nonlinear_solver);
+                    std::cout << "Geomech nonlinearIterationNewton with mechanical solve: "
+                              << this->simulator_.problem().iterationContext().iteration();// << std::endl;
+                    Parent::nonlinearIterationNewton(timer, nonlinear_solver);
                 }
                 return report;       
         }
 
         template <class NonlinearSolverType>
-        SimulatorReportSingle nonlinearIterationSeqMechFrac(const int iteration,
-                                            const SimulatorTimerInterface& timer,
+        SimulatorReportSingle nonlinearIterationSeqMechFrac(const SimulatorTimerInterface& timer,
                                             NonlinearSolverType& nonlinear_solver){
             const PropertyTree& prm = this->simulator_.problem().getGeomechParam();
             bool implicit_flow = prm.get<bool>("solver.implicit_flow");
             SimulatorReportSingle report;
             {
                 std::stringstream os;
-                os << "Geomech nonlinearIterationSeqMechFrac with mechanical and fracture solve: " << iteration << std::endl;
+                os << "Geomech nonlinearIterationSeqMechFrac with mechanical and fracture solve: "
+                   << this->simulator_.problem().iterationContext().iteration()
+                   << std::endl;
                 //std::cout << "Nonlinear itration Flow Solve:" << std::endl;
-                report = Parent::nonlinearIteration(iteration, timer, nonlinear_solver);
+                report = Parent::nonlinearIteration(timer, nonlinear_solver);
                 os << "Flow solve report converged: " << report.converged;// << std::endl;         
                 OpmLog::info(os.str());
             }
@@ -135,6 +136,8 @@ namespace Opm
             if(implicit_flow){
                 do_mech = report.converged;
                 do_fracture = report.converged;
+                const auto iteration = this->simulator_.problem()
+                    .iterationContext().iteration();
                 int mech_max_it = prm.get<int>("solver.max_mech_it",10);
                 if(iteration >= mech_max_it){
                     do_mech = false;
@@ -169,9 +172,10 @@ namespace Opm
                     this->simulator_.problem().wellModel().beginTimeStep();
                     this->simulator_.problem().addConnectionsToWell();
                     this->simulator_.problem().emptyFractureLogger();
-                    auto& local_deferredLogger = FractureModel::fractureLogger;
-                    this->simulator_.problem().wellModel().calculateExplicitQuantities(local_deferredLogger);
-                    this->simulator_.problem().wellModel().prepareTimeStep(local_deferredLogger);
+
+                    auto& wellModel = this->simulator_.problem().wellModel();
+                    wellModel.calculateExplicitQuantities();
+                    wellModel.prepareTimeStep(FractureModel::fractureLogger);
 
                     //auto tmp_report = Parent::nonlinearIteration(0, timer, nonlinear_solver);// move storage cash on first iteration
                 }
@@ -282,8 +286,7 @@ namespace Opm
 
 
         template <class NonlinearSolverType>
-        SimulatorReportSingle nonlinearIterationSeqMech(const int iteration,
-                                             const SimulatorTimerInterface& timer,
+        SimulatorReportSingle nonlinearIterationSeqMech(const SimulatorTimerInterface& timer,
                                             NonlinearSolverType& nonlinear_solver){
             const PropertyTree& prm = this->simulator_.problem().getGeomechParam();
             bool implicit_flow = prm.get<bool>("solver.implicit_flow");
@@ -291,11 +294,11 @@ namespace Opm
             if(implicit_flow){
                 assert(false);
             }else{
-                report = Parent::nonlinearIteration(iteration, timer, nonlinear_solver);
+                report = Parent::nonlinearIteration(timer, nonlinear_solver);
             }
             //const PropertyTree& prm_frac = this->simulator_.problem().getFractureParam();
             int mech_max_it = prm.get<int>("solver.max_mech_it");
-            if(iteration < mech_max_it){
+            if(this->simulator_.problem().iterationContext().iteration() < mech_max_it){
                 //simulator_.problem().geomechModel().solveFracture();
                 this->simulator_.problem().geomechModel().solveGeomechanics();
                 std::cout << "Geomech nonlinearIteration with mechanical solve:";// << iteration << std::endl;

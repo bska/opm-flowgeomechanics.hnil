@@ -542,7 +542,7 @@ namespace Opm {
                     }
                   }
                   if(correct_cell == true){
-                   auto& cv =  grid.current_view_data_;
+                   auto& cv = grid.currentData().front();
                    auto& pi = cv->partition_type_indicator_;
                    std::cout << "Rank " << world_comm.rank() << " Cell global " << cgid  << " local " << cind << " parition " << Dune::PartitionType(pi->cell_indicator_[cind]) << std::endl; 
                    for(int lface=0; lface < faces.size(); ++lface){

@@ -121,15 +121,21 @@ namespace Opm {
                             const int cell_idx = wellstate.perf_data.cell_index[perf_index];
                             const auto& intQuants = simulator.model()
                                 .intensiveQuantities(cell_idx, /*timeIdx=*/0);
-                            using Scalar = double;
-                            const auto trans_mult = simulator.problem().template wellTransMultiplier<Scalar>(intQuants,cell_idx);
-                            const auto effective_well_indexs = well->wellIndex(perf_index, 
-                                                                              intQuants, 
-                                                                              trans_mult, 
-                                                                              wellstate_nupcol, 
-                                                                              /*with_fracture*/ false);
 
-                                                 
+                            using Scalar = double;
+                            const auto trans_mult = simulator.problem()
+                                .template wellTransMultiplier<Scalar>
+                                (intQuants, cell_idx, [](const auto& val) { return getValue(val); });
+
+                            auto effective_well_indexs = std::vector<Scalar>
+                                (well->numConservationQuantities(),
+                                 well->wellIndex()[perf_index] * trans_mult);
+
+                            well->getTw(effective_well_indexs,
+                                        perf_index, intQuants,
+                                        trans_mult, wellstate_nupcol,
+                                        /* with_fracture = */ false);
+
                             //const auto mobibility = well->getMobility(simulator, perf_index, mob);
                             double lambda = 0.0;
                             int numPhases = 3;

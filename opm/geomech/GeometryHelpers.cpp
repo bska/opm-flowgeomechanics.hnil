@@ -1,6 +1,9 @@
-#include "GeometryHelpers.hpp"
+#include <config.h>
+
+#include <opm/geomech/GeometryHelpers.hpp>
+
 #include <opm/geomech/CGAL_helper.hpp>
-#include "config.h"
+
 namespace external
 {
 std::vector<size_t>
